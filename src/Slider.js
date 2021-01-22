@@ -190,17 +190,15 @@ export default class Slider extends PureComponent {
     value: new Animated.Value(this.props.value),
   };
 
-  componentWillMount() {
-    this._panResponder = PanResponder.create({
-      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
-      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
-      onPanResponderGrant: this._handlePanResponderGrant,
-      onPanResponderMove: this._handlePanResponderMove,
-      onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
-      onPanResponderTerminate: this._handlePanResponderEnd,
-    });
-  }
+  _panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
+    onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
+    onPanResponderGrant: this._handlePanResponderGrant,
+    onPanResponderMove: this._handlePanResponderMove,
+    onPanResponderRelease: this._handlePanResponderEnd,
+    onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
+    onPanResponderTerminate: this._handlePanResponderEnd,
+  });
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     const newValue = nextProps.value;
