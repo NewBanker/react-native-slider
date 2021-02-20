@@ -190,15 +190,17 @@ export default class Slider extends PureComponent {
     value: new Animated.Value(this.props.value),
   };
 
-  _panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
-    onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
-    onPanResponderGrant: this._handlePanResponderGrant,
-    onPanResponderMove: this._handlePanResponderMove,
-    onPanResponderRelease: this._handlePanResponderEnd,
-    onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
-    onPanResponderTerminate: this._handlePanResponderEnd,
-  });
+  UNSAFE_componentWillMount() {
+    this._panResponder = PanResponder.create({
+      onStartShouldSetPanResponder: this._handleStartShouldSetPanResponder,
+      onMoveShouldSetPanResponder: this._handleMoveShouldSetPanResponder,
+      onPanResponderGrant: this._handlePanResponderGrant,
+      onPanResponderMove: this._handlePanResponderMove,
+      onPanResponderRelease: this._handlePanResponderEnd,
+      onPanResponderTerminationRequest: this._handlePanResponderRequestEnd,
+      onPanResponderTerminate: this._handlePanResponderEnd,
+    });
+  }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     const newValue = nextProps.value;
@@ -264,7 +266,6 @@ export default class Slider extends PureComponent {
     };
 
     const touchOverflowStyle = this._getTouchOverflowStyle();
-
     return (
       <View
         {...other}
@@ -304,8 +305,7 @@ export default class Slider extends PureComponent {
           style={[defaultStyles.touchArea, touchOverflowStyle]}
           {...this._panResponder.panHandlers}
         >
-          {debugTouchArea === true &&
-            this._renderDebugThumbTouchRect(minimumTrackWidth)}
+          {debugTouchArea === true && this._renderDebugThumbTouchRect(minimumTrackWidth)}
         </View>
       </View>
     );
@@ -328,11 +328,24 @@ export default class Slider extends PureComponent {
 
   _handleStartShouldSetPanResponder = (
     e: Object /* gestureState: Object */,
-  ): boolean =>
+  ): boolean => {
     // Should we become active when the user presses down on the thumb?
-    this._thumbHitTest(e);
+    return this._thumbHitTest(e);
+  }
+    
+  _handleStartShouldSetPanResponderCapture = (
+    e: Object /* gestureState: Object */,
+  ): boolean => {
+    // Should we become active when the user presses down on the thumb?
+    return true;
+  }
 
-  _handleMoveShouldSetPanResponder(/* e: Object, gestureState: Object */): boolean {
+  _handleMoveShouldSetPanResponder(e: Object/* gestureState: Object */): boolean {
+    // Should we become active when the user moves a touch over the thumb?
+    return false;
+  }
+
+  _handleMoveShouldSetPanResponderCapture(/* e: Object, gestureState: Object */): boolean {
     // Should we become active when the user moves a touch over the thumb?
     return false;
   }
@@ -383,6 +396,7 @@ export default class Slider extends PureComponent {
 
     const storeName = `_${name}`;
     const currentSize = this[storeName];
+
     if (
       currentSize &&
       width === currentSize.width &&
@@ -474,17 +488,29 @@ export default class Slider extends PureComponent {
 
   _getTouchOverflowSize = () => {
     const state = this.state;
-    const props = this.props;
+    const {
+      debugTouchArea,
+      thumbTouchSize
+    } = this.props;
 
-    const size = {};
+    const size = debugTouchArea ? {
+      width: Math.max(
+        0,
+        thumbTouchSize.width - state.thumbSize.width,
+      ),
+      height: Math.max(
+        0,
+        thumbTouchSize.height - state.containerSize.height,
+      )
+    } : {};
     if (state.allMeasured === true) {
       size.width = Math.max(
         0,
-        props.thumbTouchSize.width - state.thumbSize.width,
+        thumbTouchSize.width - state.thumbSize.width,
       );
       size.height = Math.max(
         0,
-        props.thumbTouchSize.height - state.containerSize.height,
+        thumbTouchSize.height - state.containerSize.height,
       );
     }
 
@@ -526,7 +552,7 @@ export default class Slider extends PureComponent {
     const state = this.state;
     const props = this.props;
     const touchOverflowSize = this._getTouchOverflowSize();
-
+    
     return new Rect(
       touchOverflowSize.width / 2 +
         this._getThumbLeft(this._getCurrentValue()) +
